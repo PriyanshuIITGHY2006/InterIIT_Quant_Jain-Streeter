@@ -1,2 +1,11 @@
 numpy
 pandas
+scipy
+statsmodels
+arch
+matplotlib
+seaborn
+ipykernel
+nbformat
+nbclient
+pytest

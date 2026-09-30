@@ -7,7 +7,8 @@ Steps
   1. Load, set types, sort, drop duplicate timestamps
   2. Validate OHLC (high/low must bound open/close, prices > 0)
   3. Reindex to a complete hourly grid; fill missing hours with flat candles
-     (O=H=L=C = previous close, volume = 0) and flag them with is_filled
+     (O=H=L=C = previous close, volume = 0) and flag them with is_filled;
+     candles that exist but contain zero trades are flagged as outages too
   4. Check BTC and ETH share the same timestamps
   5. Add simple and log returns; build 4h and 1d candles from the hourly data
   6. Split into train / validation / test and save
@@ -58,7 +59,7 @@ def validate_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 def fill_gaps(df: pd.DataFrame) -> pd.DataFrame:
     grid = pd.date_range(START, END, freq="1h", tz="UTC", name="timestamp")
     df = df.reindex(grid)
-    df["is_filled"] = df["close"].isna()
+    missing = df["close"].isna()
 
     # Flat candle at the last traded price; the exchange was down, so nothing traded
     df["close"] = df["close"].ffill()
@@ -66,7 +67,11 @@ def fill_gaps(df: pd.DataFrame) -> pd.DataFrame:
         df[col] = df[col].fillna(df["close"])
     df[VOLUME_COLS] = df[VOLUME_COLS].fillna(0.0)
 
-    print(f"  missing hours filled: {df['is_filled'].sum()}  (total rows: {len(df)})")
+    # Also flag candles Binance did publish but that contain no trades (the exchange stopped mid-hour)
+    empty = ~missing & (df["trades"] == 0)
+    df["is_filled"] = missing | empty
+
+    print(f"  missing hours filled: {missing.sum()}, empty outage candles flagged: {empty.sum()}  (total rows: {len(df)})")
     return df
 
 
