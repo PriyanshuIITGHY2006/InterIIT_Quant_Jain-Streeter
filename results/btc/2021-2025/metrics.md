@@ -1,4 +1,4 @@
-# BTC Calm-Trend Regime, 2021-2025
+# BTC Calm-Trend Regime (CTR), 2021-2025
 
 | Metric | Value |
 |---|---|

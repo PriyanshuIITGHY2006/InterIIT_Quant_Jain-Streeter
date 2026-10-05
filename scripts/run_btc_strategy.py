@@ -72,13 +72,14 @@ def risk_analysis(result) -> dict:
     }
 
 
-def plot_layers(data: pd.DataFrame, signals: pd.DataFrame, path: Path, title: str):
-    layers = btc_layers(data)
+def plot_layers(data: pd.DataFrame, signals: pd.DataFrame, path: Path, title: str, layers_fn=btc_layers,
+                asset: str = "BTC", color: str = "#F7931A"):
+    layers = layers_fn(data)
     fig, axes = plt.subplots(4, 1, figsize=(12, 10), sharex=True, gridspec_kw={"height_ratios": [3, 1, 1, 1.4]})
-    axes[0].plot(data["close"], color="#F7931A", lw=1)
+    axes[0].plot(data["close"], color=color, lw=1)
     axes[0].set_yscale("log")
     axes[0].set_title(title)
-    axes[0].set_ylabel("BTC (log)")
+    axes[0].set_ylabel(f"{asset} (log)")
     axes[1].plot(layers["trend"], lw=0.9)
     axes[1].set_ylabel("trend votes")
     axes[2].plot(layers["regime"], lw=0.9, color="tab:green", label="regime size")
@@ -93,24 +94,24 @@ def plot_layers(data: pd.DataFrame, signals: pd.DataFrame, path: Path, title: st
     plt.close(fig)
 
 
-def main():
-    data = load_daily_with_realised("BTCUSDT")
-    lines = ["# BTC/USDT strategy: Calm-Trend Regime (CTR), results", "",
-             "Logic and risk plan: `reports/btc_strategy.md`. 10,000 USDT start, 0.15% per fill, max 1.5x equity, "
-             "8%/yr on borrowed USDT.", ""]
+def run_final(symbol: str, signal_fn, layers_fn, out: Path, name: str, doc: str, asset: str, color: str):
+    """Run a final strategy on every period and write all deliverables to `out`."""
+    data = load_daily_with_realised(symbol)
+    lines = [f"# {symbol[:3]}/USDT strategy: {name}, results", "",
+             f"Logic and risk plan: `{doc}`. 10,000 USDT start, 0.15% per fill, max 1.5x equity, 8%/yr on borrowed USDT.", ""]
     table, risk = {}, {}
     for label, (start, end) in PERIODS.items():
-        result, period = run_on_period(data, btc_signal, start, end, trading_config())
+        result, period = run_on_period(data, signal_fn, start, end, trading_config())
         metrics = compute_metrics(result, period)
-        log_experiment("btc_final", "BTCUSDT", {"strategy": "calm_trend_regime"}, start, end, result.config, metrics)
-        save_report(result, period, metrics, OUT / label, title=f"BTC Calm-Trend Regime, {label}")
-        stressed, _ = run_on_period(data, btc_signal, start, end, trading_config(0.003), check=False)
+        log_experiment(f"{asset.lower()}_final", symbol, {"strategy": "calm_trend_regime"}, start, end, result.config, metrics)
+        save_report(result, period, metrics, out / label, title=f"{asset} {name}, {label}")
+        stressed, _ = run_on_period(data, signal_fn, start, end, trading_config(0.003), check=False)
         table[label] = {k: metrics[k] for k in REQUIRED + EXTRA} | {"Sharpe at 2x costs": compute_metrics(stressed, period)["Sharpe Ratio"]}
         risk[label] = risk_analysis(result)
         yearly = yearly_breakdown(result, period)
-        yearly.to_csv(OUT / label / "yearly.csv")
-        plot_layers(period, btc_signal(data.loc[:end]).loc[start:end], OUT / label / "layers.png",
-                    f"BTC Calm-Trend Regime: decision layers, {label}")
+        yearly.to_csv(out / label / "yearly.csv")
+        plot_layers(period, signal_fn(data.loc[:end]).loc[start:end], out / label / "layers.png",
+                    f"{asset} {name}: decision layers, {label}", layers_fn, asset, color)
         if label == "2021-2025":
             lines += ["## By year (2021-2025)", "", markdown_table(yearly.round(2)), ""]
     metrics_table = pd.DataFrame(table).map(fmt)
@@ -118,9 +119,13 @@ def main():
                          "## Risk / reward of the closed trades", "", markdown_table(pd.DataFrame(risk).map(fmt)), ""] + lines[4:]
     lines += ["Charts per period: `equity.png` (equity and drawdown vs buy-and-hold), `trades.png`, `layers.png`. "
               "Trade history: `trades.csv`; quarterly: `quarterly.csv`."]
-    (OUT / "summary.md").write_text("\n".join(lines) + "\n")
+    (out / "summary.md").write_text("\n".join(lines) + "\n")
     print(metrics_table.to_string())
     print(pd.DataFrame(risk).map(fmt).to_string())
+
+
+def main():
+    run_final("BTCUSDT", btc_signal, btc_layers, OUT, "Calm-Trend Regime (CTR)", "reports/btc_strategy.md", "BTC", "#F7931A")
 
 
 if __name__ == "__main__":
