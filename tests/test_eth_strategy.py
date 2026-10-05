@@ -7,7 +7,7 @@ from src.backtest.checks import check_backtest_truncation, check_signals_causal
 from src.backtest.evaluation import run_on_period
 from src.backtest.metrics import compute_metrics
 from src.data.loader import load_daily_with_realised
-from src.strategies.btc_strategy import btc_signal
+from src.strategies.btc_strategy import ctr_long_signal
 from src.strategies.eth_strategy import eth_signal
 from src.strategies.execution import trading_config
 
@@ -31,7 +31,7 @@ def test_target_bounds(eth):
 
 
 def test_same_rules_as_btc(eth):
-    pd.testing.assert_frame_equal(eth_signal(eth), btc_signal(eth))
+    pd.testing.assert_frame_equal(eth_signal(eth), ctr_long_signal(eth))
 
 
 def test_frozen_results_2021_2024(eth):

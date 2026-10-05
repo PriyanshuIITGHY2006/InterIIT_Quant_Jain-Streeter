@@ -220,12 +220,16 @@ def run_backtest(data: pd.DataFrame, signals, config: BacktestConfig | None = No
                 if not config.reenter_after_exit:
                     blocked_side, blocked_at = pos.side, i
 
-        # 3. Interest on borrowed cash for holding through this bar, then mark to market at the close
+        # 3. Interest on borrowed cash (longs) or borrowed coins (shorts) for holding through this bar, then mark to market at the close
         pos = book.pos
         if pos and book.cash < 0 and config.borrow_rate > 0:
             interest = -book.cash * config.borrow_rate * bar_years
             book.cash -= interest
             pos.financing += interest
+        if pos and pos.side == -1 and config.short_borrow_rate > 0:
+            fee = pos.qty * c[i] * config.short_borrow_rate * bar_years
+            book.cash -= fee
+            pos.financing += fee
         held[i] = pos.side * pos.qty if pos else 0.0
         equity[i] = book.cash + held[i] * c[i]
         cash[i] = book.cash

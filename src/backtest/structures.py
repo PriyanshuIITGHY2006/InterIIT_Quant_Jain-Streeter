@@ -14,6 +14,8 @@ class BacktestConfig:
     allow_short         if False, negative targets raise an error
     max_position        cap on |target| (fraction of equity; 1.0 = fully invested, >1 = leverage)
     borrow_rate         yearly interest on borrowed cash (negative cash when leveraged long), charged every bar
+    short_borrow_rate   yearly fee for borrowing the coins sold short, on the short position's value at
+                        each bar's close, charged every bar
     max_holding_bars    close a position after this many bars (None = no limit)
     rebalance_threshold if set, an open position is resized to the new |target| whenever the
                         target differs from the current exposure by more than this (e.g. 0.1);
@@ -31,6 +33,7 @@ class BacktestConfig:
     allow_short: bool = False
     max_position: float = 1.0
     borrow_rate: float = 0.0
+    short_borrow_rate: float = 0.0
     max_holding_bars: int | None = None
     rebalance_threshold: float | None = None
     reenter_after_exit: bool = False

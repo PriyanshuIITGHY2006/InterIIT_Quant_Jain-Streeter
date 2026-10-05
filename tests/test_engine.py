@@ -283,6 +283,21 @@ def test_leveraged_round_trip_with_financing():
     assert result.equity.iloc[-1] == pytest.approx(10_000 + trade["net_pnl"])
 
 
+def test_short_borrow_fee():
+    # Short 0.5x at bar 1's open (100), held through bars 1-2 (closes 90, 80), covered at bar 3's open (80)
+    data = make_bars([100, 100, 90, 80, 80], closes=[100, 90, 80, 80, 80], freq="1D")
+    config = BacktestConfig(allow_short=True, short_borrow_rate=0.10)
+    result = run_backtest(data, signals(data, [-0.5, -0.5, 0, 0, 0]), config)
+    trade = result.trades.iloc[0]
+
+    qty = 0.5 * 10_000 / (100 * (1 + COST))
+    fee = qty * (90 + 80) * 0.10 / 365                           # on the short's value at each held close
+    fees = qty * 100 * COST + qty * 80 * COST
+    assert trade["financing"] == pytest.approx(fee)
+    assert trade["net_pnl"] == pytest.approx(qty * 20 - fees - fee)
+    assert result.equity.iloc[-1] == pytest.approx(10_000 + trade["net_pnl"])
+
+
 def test_leverage_above_cap_is_rejected():
     data = make_bars([100, 100, 100])
     with pytest.raises(ValueError):
