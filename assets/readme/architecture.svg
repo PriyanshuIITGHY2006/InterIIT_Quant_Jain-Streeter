@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="200" viewBox="0 0 880 200" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="none">
+  <rect width="880" height="200" fill="#fff"/>
+  <defs><marker id="h" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L8 4L0 8" stroke="#111" stroke-width="1.2"/></marker></defs>
+  <g stroke="#111" stroke-width="1.2">
+    <rect x="20"  y="60" width="110" height="44"/>
+    <rect x="165" y="60" width="110" height="44"/>
+    <rect x="310" y="60" width="110" height="44"/>
+    <rect x="455" y="60" width="110" height="44" stroke="#e4572e" stroke-width="2"/>
+    <rect x="600" y="60" width="110" height="44"/>
+    <rect x="745" y="60" width="115" height="44"/>
+    <path d="M130 82H163" marker-end="url(#h)"/><path d="M275 82H308" marker-end="url(#h)"/><path d="M420 82H453" marker-end="url(#h)"/><path d="M565 82H598" marker-end="url(#h)"/><path d="M710 82H743" marker-end="url(#h)"/>
+    <path d="M75 150H802" stroke-dasharray="3 4"/>
+    <path d="M75 104V150M220 104V150M365 104V150M510 104V150M655 104V150M802 104V150" stroke-dasharray="3 4"/>
+  </g>
+  <g fill="#111" text-anchor="middle">
+    <text x="75"  y="87">data</text>
+    <text x="220" y="87">clean</text>
+    <text x="365" y="87">state</text>
+    <text x="510" y="87" fill="#e4572e">strategy</text>
+    <text x="655" y="87">engine</text>
+    <text x="802" y="87">report</text>
+    <text x="440" y="176" fill="#666" font-size="12">truncation tests</text>
+  </g>
+</svg>

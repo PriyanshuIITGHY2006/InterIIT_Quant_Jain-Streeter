@@ -59,8 +59,13 @@ REFERENCE_INDICATORS = {
 }
 
 
+RESEARCH_ONLY = {"markov": "statsmodels", "clusters": "sklearn"}     # notebook-02 indicators; not used by the strategies
+
+
 @pytest.mark.parametrize("name", list(REFERENCE_INDICATORS))
 def test_reference_indicators_are_causal(btc, name):
+    if name in RESEARCH_ONLY:
+        pytest.importorskip(RESEARCH_ONLY[name], reason="research stack not installed (pip install -e '.[research]')")
     fn = REFERENCE_INDICATORS[name]
     full = fn(btc)
     for cut in [400, 800]:

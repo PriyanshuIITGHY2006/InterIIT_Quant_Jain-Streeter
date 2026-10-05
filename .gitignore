@@ -2,3 +2,7 @@
 __pycache__/
 CLAUDE.md
 .claude/
+
+# system outputs and downloaded data
+runs/
+data/external/

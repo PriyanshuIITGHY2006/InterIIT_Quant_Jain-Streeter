@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ctr-system"
+version = "1.0.0"
+description = "Calm-Trend Regime: frozen BTC/USDT and ETH/USDT strategies, an in-house backtest engine and a data-analysis pipeline for unseen data."
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scipy>=1.11",
+    "matplotlib>=3.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+research = [
+    "statsmodels",
+    "arch",
+    "scikit-learn",
+    "shap",
+    "seaborn",
+    "tabulate",
+    "ipykernel",
+    "nbformat",
+    "nbclient",
+    "jupyterlab",
+]
+
+[project.scripts]
+ctr = "src.system.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["src*", "scripts*"]

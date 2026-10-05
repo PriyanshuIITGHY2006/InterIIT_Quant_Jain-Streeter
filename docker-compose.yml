@@ -1,0 +1,44 @@
+# docker compose run --rm ctr run data/external/<file>.csv [--asset btc|eth] [--start YYYY-MM-DD]
+# docker compose run --rm ctr download --asset btc --start 2026-01-01 --end 2026-10-01 --run
+# docker compose run --rm selftest
+# docker compose run --rm reproduce
+# docker compose up notebook          -> Jupyter Lab on http://localhost:8888 (dev image)
+name: ctr
+
+x-ctr: &ctr
+  build:
+    context: .
+    target: runtime
+  image: ctr:1.0.0
+  user: "${UID:-1000}:${GID:-1000}"
+  volumes:
+    - ./runs:/app/runs
+    - ./data/external:/app/data/external
+
+services:
+  ctr:
+    <<: *ctr
+    command: ["info"]
+
+  selftest:
+    <<: *ctr
+    command: ["selftest"]
+
+  reproduce:
+    <<: *ctr
+    command: ["reproduce"]
+    volumes:
+      - ./runs:/app/runs
+      - ./results:/app/results
+
+  notebook:
+    build:
+      context: .
+      target: dev
+    image: ctr-dev:1.0.0
+    profiles: ["dev"]
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/app
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--no-browser", "--IdentityProvider.token=", "--ServerApp.root_dir=/app"]
