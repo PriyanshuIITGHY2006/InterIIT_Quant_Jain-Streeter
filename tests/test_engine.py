@@ -211,3 +211,79 @@ def test_random_signals_lose_about_the_costs():
 
     assert fee_pct.mean() == pytest.approx(0.30, abs=0.002)
     assert abs(gross_pct.mean()) < 3 * standard_error
+
+
+# ---------------------------------------------------------------- rebalancing
+def test_resize_down_matches_hand_calculation():
+    # Enter fully at 100, cut to half at 120, close the rest at 130
+    data = make_bars([100, 100, 120, 130, 130])
+    config = BacktestConfig(rebalance_threshold=0.1)
+    result = run_backtest(data, signals(data, [1, 0.5, 0, 0, 0]), config)
+
+    q0 = 10_000 / (100 * (1 + COST))
+    fee0 = q0 * 100 * COST
+    equity_at_120 = q0 * 120                                   # cash is 0 after a full entry
+    q1 = 0.5 * equity_at_120 / (120 * (1 + COST))
+    sold = q0 - q1
+    fee1 = sold * 120 * COST
+    fee2 = q1 * 130 * COST
+    gross = sold * 20 + q1 * 30
+
+    trade = result.trades.iloc[0]
+    assert list(result.fills["reason"]) == ["entry", "resize", "signal"]
+    assert trade["gross_pnl"] == pytest.approx(gross)
+    assert trade["fees"] == pytest.approx(fee0 + fee1 + fee2)
+    assert result.equity.iloc[-1] == pytest.approx(10_000 + gross - fee0 - fee1 - fee2)
+
+
+def test_resize_up_updates_average_entry_and_keeps_invariants():
+    data = make_bars([100, 100, 110, 120, 120, 125])
+    result = run_backtest(data, signals(data, [0.5, 0.5, 1, 1, 1, 1]), BacktestConfig(rebalance_threshold=0.1))
+    resize = result.fills[result.fills["reason"] == "resize"].iloc[0]
+    assert resize["time"] == data.index[3] and resize["action"] == "buy"
+    marked = result.cash + result.position * data["close"]
+    assert np.allclose(result.equity, marked)
+    assert result.trades["net_pnl"].sum() == pytest.approx(result.equity.iloc[-1] - 10_000)
+    assert result.fills["fee"].sum() == pytest.approx(result.trades["fees"].sum())
+
+
+def test_no_resize_without_threshold_or_for_small_changes():
+    data = make_bars([100, 100, 110, 120, 120])
+    target = [1, 0.95, 0.5, 0.5, 0.5]
+    no_threshold = run_backtest(data, signals(data, target))
+    assert "resize" not in set(no_threshold.fills["reason"])
+    small_change = run_backtest(data, signals(data, [1, 0.95, 0.95, 0.95, 0.95]), BacktestConfig(rebalance_threshold=0.1))
+    assert "resize" not in set(small_change.fills["reason"])
+
+
+def test_reentry_after_cooldown():
+    # Stopped out in bar 2; the signal stays long. With a 2-bar cool-down it re-enters at bar 5's open
+    # (decision at bar 4's close, 2 bars after the stop), not before.
+    data = make_bars(opens=[100, 100, 98, 98, 98, 98, 98], lows=[100, 99, 94, 98, 98, 98, 98])
+    config = BacktestConfig(reentry_cooldown_bars=2)
+    result = run_backtest(data, signals(data, [1] * 7, stop_dist=5.0), config)
+    entries = result.fills[result.fills["reason"] == "entry"]
+    assert list(entries["time"]) == [data.index[1], data.index[5]]
+
+
+# ---------------------------------------------------------------- leverage and financing
+def test_leveraged_round_trip_with_financing():
+    data = make_bars([100, 100, 110, 110], freq="1D")
+    config = BacktestConfig(max_position=1.5, borrow_rate=0.08)
+    result = run_backtest(data, signals(data, [1.5, 0, 0, 0]), config)
+    trade = result.trades.iloc[0]
+
+    qty = 1.5 * 10_000 / (100 * (1 + COST))
+    borrowed = qty * 100 * (1 + COST) - 10_000                   # = 5,000
+    interest = borrowed * 0.08 / 365                             # held through one daily bar
+    fees = qty * 100 * COST + qty * 110 * COST
+    assert borrowed == pytest.approx(5_000)
+    assert trade["financing"] == pytest.approx(interest)
+    assert trade["net_pnl"] == pytest.approx(qty * 10 - fees - interest)
+    assert result.equity.iloc[-1] == pytest.approx(10_000 + trade["net_pnl"])
+
+
+def test_leverage_above_cap_is_rejected():
+    data = make_bars([100, 100, 100])
+    with pytest.raises(ValueError):
+        run_backtest(data, signals(data, [1.5, 0, 0]))          # default max_position = 1

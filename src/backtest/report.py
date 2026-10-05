@@ -70,3 +70,17 @@ def save_report(result: BacktestResult, data: pd.DataFrame, metrics: dict, out_d
     quarterly_comparison(result.equity, data, result.config.initial_capital).to_csv(out / "quarterly.csv")
     plot_equity(result, data, out / "equity.png", title)
     plot_trades(result, data, out / "trades.png", title)
+
+
+def markdown_table(df: pd.DataFrame) -> str:
+    """Render a DataFrame as a Markdown table (floats to 2 decimals, timedeltas in days)."""
+    def cell(v):
+        if isinstance(v, float):
+            return f"{v:,.2f}"
+        if isinstance(v, pd.Timedelta):
+            return f"{v.days} d"
+        return str(v)
+    header = "| | " + " | ".join(map(str, df.columns)) + " |"
+    lines = [header, "|" + "---|" * (len(df.columns) + 1)]
+    lines += ["| " + str(idx) + " | " + " | ".join(cell(v) for v in row) + " |" for idx, row in df.iterrows()]
+    return "\n".join(lines)

@@ -17,6 +17,7 @@ def example():
     trades = pd.DataFrame({
         "net_pnl": [100.0, -50.0, 200.0, -25.0],
         "fees": [3.0, 3.0, 3.0, 3.0],
+        "gross_pnl": [103.0, -47.0, 203.0, -22.0],             # net PnL + fees
         "side": ["long", "long", "short", "long"],
         "duration": hours,
     })
@@ -40,6 +41,7 @@ def test_trade_metrics(example):
     assert m["Maximum Holding Duration"] == pd.Timedelta(hours=6)
     assert m["Long Trades"] == 3 and m["Short Trades"] == 1
     assert m["Total Fees (USDT)"] == 12
+    assert m["Trading PnL before Fees (USDT)"] == 237           # = net profit + fees
     assert m["Exposure (%)"] == 40
 
 
@@ -81,3 +83,12 @@ def test_quarterly_comparison():
     assert list(table["strategy %"].round(6)) == [10.0, 10.0]
     assert list(table["buy & hold %"].round(6)) == [0.0, 50.0]
     assert list(table["beat"]) == [True, False]
+
+
+def test_deflated_sharpe_penalises_many_trials():
+    from src.backtest.evaluation import deflated_sharpe
+    rng = np.random.default_rng(0)
+    returns = pd.Series(rng.normal(0.001, 0.02, 1000))          # annual Sharpe ~ 0.95
+    few = deflated_sharpe(returns, pd.Series(rng.normal(0, 0.3, 5)))
+    many = deflated_sharpe(returns, pd.Series(rng.normal(0, 0.3, 2000)))
+    assert 0 <= many["deflated Sharpe (probability true Sharpe > 0)"] < few["deflated Sharpe (probability true Sharpe > 0)"] <= 1

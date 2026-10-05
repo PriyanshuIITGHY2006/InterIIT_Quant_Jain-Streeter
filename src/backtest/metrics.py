@@ -128,6 +128,8 @@ def compute_metrics(result: BacktestResult, data: pd.DataFrame) -> dict:
         "Long Trades": int((trades["side"] == "long").sum()) if has_trades else 0,
         "Short Trades": int((trades["side"] == "short").sum()) if has_trades else 0,
         "Total Fees (USDT)": trades["fees"].sum() if has_trades else 0.0,
+        "Trading PnL before Fees (USDT)": trades["gross_pnl"].sum() if has_trades else 0.0,
+        "Total Financing (USDT)": trades["financing"].sum() if has_trades and "financing" in trades else 0.0,
         "Max Drawdown Recovery Time": dd["max_dd_recovery"],
         "Longest Time Under Water": dd["longest_underwater"],
         "Quarters Beating Buy-and-Hold (%)": 100 * quarters["beat"].mean(),

@@ -9,3 +9,6 @@ ipykernel
 nbformat
 nbclient
 pytest
+tabulate
+scikit-learn
+shap

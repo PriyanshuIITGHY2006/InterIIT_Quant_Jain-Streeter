@@ -18,7 +18,9 @@ Strategy input: a DataFrame with the same index as the data and columns
     tp_dist     optional take-profit distance in price units, set at entry
     trail_dist  optional trailing-stop distance in price units, set at entry
 (a plain Series is treated as `target`).
-The size of a position is fixed at entry; a change in |target| without a change of side is ignored.
+The size of a position is fixed at entry unless `rebalance_threshold` is set; then the position is
+resized (at the next open, with costs on the traded amount) whenever |target| moves away from the
+current exposure by more than the threshold.
 """
 import numpy as np
 import pandas as pd
@@ -49,8 +51,8 @@ def prepare_signals(signals, data: pd.DataFrame, config: BacktestConfig) -> pd.D
 
     sig = signals.reindex(columns=["target"] + LEVEL_COLUMNS).astype(float)
     sig["target"] = sig["target"].fillna(0.0)
-    if (sig["target"].abs() > 1).any():
-        raise ValueError("target must be within [-1, 1]")
+    if (sig["target"].abs() > max(1.0, config.max_position) + 1e-12).any():
+        raise ValueError("target must be within [-max_position, max_position]")
     if not config.allow_short and (sig["target"] < 0).any():
         raise ValueError("negative target found but allow_short is False")
     return sig
@@ -77,7 +79,7 @@ class _Book:
 
         stop_dist, tp_dist, trail_dist = (d if d > 0 else None for d in np.nan_to_num(levels))
         self.pos = Position(
-            side=side, qty=qty, entry_i=i, entry_price=price, entry_fee=fee,
+            side=side, qty=qty, entry_i=i, entry_price=price, fees_paid=fee, realized=0.0, financing=0.0, max_qty=qty,
             stop=price - side * stop_dist if stop_dist else None,
             take_profit=price + side * tp_dist if tp_dist else None,
             trail_dist=trail_dist,
@@ -85,12 +87,32 @@ class _Book:
         )
         self._log_fill(i, "buy" if side == 1 else "sell", qty, price, fee, "entry")
 
+    def resize(self, i: int, fraction: float, price: float):
+        """Change the size of the open position to `fraction` of current equity (same side)."""
+        p = self.pos
+        equity_now = self.cash + p.side * p.qty * price          # known at this open
+        dq = fraction * equity_now / (price * (1 + self.cost)) - p.qty
+        if dq == 0:
+            return
+        fee = abs(dq) * price * self.cost
+        self.cash -= p.side * dq * price + fee
+        if dq > 0:                                              # adding: update the average entry price
+            p.entry_price = (p.qty * p.entry_price + dq * price) / (p.qty + dq)
+        else:                                                   # reducing: realise PnL on the part sold
+            p.realized += p.side * -dq * (price - p.entry_price)
+        p.qty += dq
+        p.max_qty = max(p.max_qty, p.qty)
+        p.fees_paid += fee
+        buying = (dq > 0) == (p.side == 1)
+        self._log_fill(i, "buy" if buying else "sell", abs(dq), price, fee, "resize")
+
     def close(self, i: int, price: float, reason: str):
         p = self.pos
         fee = p.qty * price * self.cost
         self.cash += p.side * p.qty * price - fee
-        gross = p.side * p.qty * (price - p.entry_price)
-        net = gross - p.entry_fee - fee
+        gross = p.realized + p.side * p.qty * (price - p.entry_price)
+        fees = p.fees_paid + fee
+        net = gross - fees - p.financing
 
         if p.side == 1:
             mae, mfe = p.lowest / p.entry_price - 1, p.highest / p.entry_price - 1
@@ -101,13 +123,14 @@ class _Book:
             "entry_time": self.times[p.entry_i],
             "exit_time": self.times[i],
             "side": "long" if p.side == 1 else "short",
-            "qty": p.qty,
+            "qty": p.max_qty,
             "entry_price": p.entry_price,
             "exit_price": price,
             "gross_pnl": gross,
-            "fees": p.entry_fee + fee,
+            "fees": fees,
+            "financing": p.financing,
             "net_pnl": net,
-            "return_pct": 100 * net / (p.qty * p.entry_price),
+            "return_pct": 100 * net / (p.max_qty * p.entry_price),
             "bars_held": i - p.entry_i,
             "duration": self.times[i] - self.times[p.entry_i],
             "exit_reason": reason,
@@ -161,26 +184,31 @@ def run_backtest(data: pd.DataFrame, signals, config: BacktestConfig | None = No
     n = len(data)
 
     book = _Book(config, times)
+    bar_years = (times.to_series().diff().median() / pd.Timedelta(days=365)) if n > 1 else 0.0
     equity, cash, held = np.empty(n), np.empty(n), np.zeros(n)
     deferred = []
 
     # The decision waiting to be executed at the next tradable open
     want_side, want_size, want_levels, want_reason = 0, 0.0, (np.nan,) * 3, "signal"
-    blocked_side = 0              # side we may not re-enter until the signal changes
+    want_resize = False
+    blocked_side = 0              # side we may not re-enter until the signal changes (or the cool-down ends)
+    blocked_at = 0
     peak = config.initial_capital
     halted = False
 
     for i in range(n):
         # 1. Execute the previous decision at this bar's open
         side_now = book.pos.side if book.pos else 0
-        if i > 0 and side_now != want_side:
+        if i > 0 and (side_now != want_side or want_resize):
             if not ok[i]:
                 deferred.append(times[i])
-            else:
+            elif side_now != want_side:
                 if book.pos:
                     book.close(i, o[i], want_reason)
                 if want_side != 0:
                     book.open(i, want_side, want_size, o[i], want_levels)
+            else:
+                book.resize(i, want_size, o[i])
 
         # 2. Stops and targets inside this bar
         if book.pos and ok[i]:
@@ -190,10 +218,14 @@ def run_backtest(data: pd.DataFrame, signals, config: BacktestConfig | None = No
             if price is not None:
                 book.close(i, price, reason)
                 if not config.reenter_after_exit:
-                    blocked_side = pos.side
+                    blocked_side, blocked_at = pos.side, i
 
-        # 3. Mark to market at the close
+        # 3. Interest on borrowed cash for holding through this bar, then mark to market at the close
         pos = book.pos
+        if pos and book.cash < 0 and config.borrow_rate > 0:
+            interest = -book.cash * config.borrow_rate * bar_years
+            book.cash -= interest
+            pos.financing += interest
         held[i] = pos.side * pos.qty if pos else 0.0
         equity[i] = book.cash + held[i] * c[i]
         cash[i] = book.cash
@@ -212,7 +244,8 @@ def run_backtest(data: pd.DataFrame, signals, config: BacktestConfig | None = No
         if config.exposure_cap is not None:
             size = min(size, max(0.0, config.exposure_cap(times[i], equity[i], peak)))
 
-        if blocked_side and side != blocked_side:
+        cooled_down = config.reentry_cooldown_bars is not None and i - blocked_at >= config.reentry_cooldown_bars
+        if blocked_side and (side != blocked_side or cooled_down):
             blocked_side = 0
         if blocked_side:
             side = 0
@@ -221,12 +254,16 @@ def run_backtest(data: pd.DataFrame, signals, config: BacktestConfig | None = No
         if pos and config.max_holding_bars and i - pos.entry_i + 1 >= config.max_holding_bars:
             side, reason = 0, "time_exit"
             if not config.reenter_after_exit:
-                blocked_side = pos.side
+                blocked_side, blocked_at = pos.side, i
         if size == 0:
             side = 0
 
-        # Keep an existing position as it is; otherwise remember the new decision
-        if not (pos and side == pos.side):
+        # Same side as the open position: optionally resize it; otherwise remember the new decision
+        want_resize = False
+        if pos and side == pos.side:
+            exposure = abs(held[i]) * c[i] / equity[i]
+            want_resize = config.rebalance_threshold is not None and abs(size - exposure) > config.rebalance_threshold
+        else:
             want_levels = tuple(levels[i])
         want_side, want_size, want_reason = side, size, reason
 

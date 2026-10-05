@@ -1,0 +1,34 @@
+# BTC Calm-Trend Regime, 2021-2025
+
+| Metric | Value |
+|---|---|
+| Gross Profit (USDT) | 42,639.75 |
+| Net Profit (USDT) | 35,812.22 |
+| Total Closed Trades | 21 |
+| Win Rate (%) | 28.57 |
+| Max Drawdown (%) | -37.53 |
+| Gross Loss (USDT) | -6,827.53 |
+| Average Winning Trade (USDT) | 7,106.63 |
+| Average Losing Trade (USDT) | -455.17 |
+| Buy-and-Hold Return (%) | 197.92 |
+| Largest Losing Trade (USDT) | -3,739.80 |
+| Largest Winning Trade (USDT) | 18,768.61 |
+| Sharpe Ratio | 0.98 |
+| Sortino Ratio | 1.61 |
+| Average Holding Duration | 65 days 20:34:17.142857 |
+| Maximum Holding Duration | 290 days 00:00:00 |
+| Total Return (%) | 358.12 |
+| Annualised Return (%) | 35.56 |
+| Calmar Ratio | 0.95 |
+| Exposure (%) | 75.74 |
+| Long Trades | 21 |
+| Short Trades | 0 |
+| Total Fees (USDT) | 3,834.28 |
+| Trading PnL before Fees (USDT) | 40,578.92 |
+| Total Financing (USDT) | 932.43 |
+| Max Drawdown Recovery Time | 723 days 00:00:00 |
+| Longest Time Under Water | 723 days 00:00:00 |
+| Quarters Beating Buy-and-Hold (%) | 55.00 |
+| Buy-and-Hold Max Drawdown (%) | -76.63 |
+| Buy-and-Hold Sharpe Ratio | 0.67 |
+| Orders Deferred by Outages | 0 |
