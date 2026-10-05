@@ -242,7 +242,7 @@ where $b$ is the daily borrowing rate on leverage above 1. Adaptedness is exactl
 Write the return as a location–scale process
 
 $$
-r_{t+1} = \mu_t + \sigma_t\, \varepsilon_{t+1}, \qquad \mathbb{E}[\varepsilon_{t+1}\mid\mathcal{F}_t]=0,\ \operatorname{Var}(\varepsilon_{t+1}\mid\mathcal{F}_t)=1 .
+r_{t+1} = \mu_t + \sigma_t\, \varepsilon_{t+1}, \qquad \mathbb{E}[\varepsilon_{t+1}\mid\mathcal{F}_t]=0,\ \mathrm{Var}(\varepsilon_{t+1}\mid\mathcal{F}_t)=1 .
 $$
 
 Three stylised facts, all measured on our data, determine what can and cannot be traded.
@@ -259,7 +259,7 @@ Three stylised facts, all measured on our data, determine what can and cannot be
 **(c) Approximate martingale-difference behaviour of the mean.** The **variance ratio**
 
 $$
-VR(q) = \frac{\operatorname{Var}\!\big(\sum_{i=1}^{q} r_{t+i}\big)}{q\,\operatorname{Var}(r_t)} = 1 + 2\sum_{k=1}^{q-1}\Big(1-\frac{k}{q}\Big)\rho_k
+VR(q) = \frac{\mathrm{Var}\!\big(\sum_{i=1}^{q} r_{t+i}\big)}{q\,\mathrm{Var}(r_t)} = 1 + 2\sum_{k=1}^{q-1}\Big(1-\frac{k}{q}\Big)\rho_k
 $$
 
 is a weighted sum of autocorrelations $\rho_k$. With the heteroskedasticity-robust Lo–MacKinlay statistic, our daily estimates are $VR(2)=0.97$, $VR(5)=1.00$, $VR(10)=1.01$ and $VR(20)=1.02$, all with $|z|<1$.
@@ -275,11 +275,11 @@ $$
 ## M3. Why directional indicators fail
 
 ### M3.1 The information coefficient and the cost hurdle
-- Let $s_t$ be any $\mathcal{F}_t$-measurable signal and $IC = \operatorname{corr}(s_t, r_{t+1:t+h})$ its information coefficient.
-- If $(s, r)$ is approximately jointly Gaussian with $\mathbb{E}[r]=0$, the expected return of the sign bet $w_t = \operatorname{sign}(s_t)$ is
+- Let $s_t$ be any $\mathcal{F}_t$-measurable signal and $IC = \mathrm{corr}(s_t, r_{t+1:t+h})$ its information coefficient.
+- If $(s, r)$ is approximately jointly Gaussian with $\mathbb{E}[r]=0$, the expected return of the sign bet $w_t = \mathrm{sign}(s_t)$ is
 
 $$
-\mathbb{E}[\operatorname{sign}(s)\,r] = \mathbb{E}\big[\operatorname{sign}(s)\,\mathbb{E}[r\mid s]\big] = \rho\,\frac{\sigma_r}{\sigma_s}\,\mathbb{E}|s| = \rho\,\sigma_r\sqrt{2/\pi}.
+\mathbb{E}[\mathrm{sign}(s)\,r] = \mathbb{E}\big[\mathrm{sign}(s)\,\mathbb{E}[r\mid s]\big] = \rho\,\frac{\sigma_r}{\sigma_s}\,\mathbb{E}|s| = \rho\,\sigma_r\sqrt{2/\pi}.
 $$
 
 **Our strongest short-horizon effect** (the 4-hour return predicting the next 4 hours) has $\rho \approx -0.07$ ($t=-11$, same sign in every year).
@@ -338,10 +338,10 @@ HA^o_t = \sum_{j\ge1} 2^{-j}\, HA^c_{t-j},
 $$
 
 an EWMA with $\alpha = 1/2$ of the *lagged* typical price.
-- The candle colour $\operatorname{sign}(HA^c_t - HA^o_t)$ is therefore the sign of a very short momentum filter, so it inherits M3.5's zero expected P&L. It is causal (allowed) but uninformative.
+- The candle colour $\mathrm{sign}(HA^c_t - HA^o_t)$ is therefore the sign of a very short momentum filter, so it inherits M3.5's zero expected P&L. It is causal (allowed) but uninformative.
 
 ### M3.7 The Kalman filter: an EWMA by another name
-For the local-level model $x_t = \ell_t + \epsilon_t$ ($\operatorname{Var}=R$), $\ell_t = \ell_{t-1} + \eta_t$ ($\operatorname{Var}=Q$):
+For the local-level model $x_t = \ell_t + \epsilon_t$ ($\mathrm{Var}=R$), $\ell_t = \ell_{t-1} + \eta_t$ ($\mathrm{Var}=Q$):
 - The prior variance converges to the solution of the **algebraic Riccati equation**
 
 $$
@@ -434,7 +434,7 @@ samples.
 For a jump-diffusion $d\ln P_t = \mu_t\,dt + \sigma_t\,dW_t + dJ_t$, the sum of squared intraday returns converges to the **quadratic variation**:
 
 $$
-RV_t = \sum_{i=1}^{M} r_{t,i}^2 \xrightarrow{\;M\to\infty\;} \int_{t-1}^{t}\sigma_s^2\,ds + \sum_{t-1<s\le t} (\Delta J_s)^2 .
+RV_t = \sum_{i=1}^{M} r_{t,i}^2 \underset{M\to\infty}{\longrightarrow} \int_{t-1}^{t}\sigma_s^2\,ds + \sum_{t-1<s\le t} (\Delta J_s)^2 .
 $$
 
 The **bipower variation**, with $\mu_1 = \mathbb{E}|Z| = \sqrt{2/\pi}$,
@@ -445,7 +445,7 @@ $$
 
 converges to the **integrated variance alone** (Barndorff-Nielsen & Shephard), so $RV - BV$ isolates the jump component.
 
-The **realised semivariances** $RS^{\pm}_t = \sum_i r_{t,i}^2\,\mathbf 1\{r_{t,i} \gtrless 0\}$ split $RV$ by sign. Our forecasting regressions give:
+The **realised semivariances** $RS^{\pm}_t = \sum_i r_{t,i}^2\,\mathbf{1}\{r_{t,i} \gtrless 0\}$ split $RV$ by sign. Our forecasting regressions give:
 
 | Component | Coefficient on next week's variance |
 |---|---|
@@ -481,10 +481,10 @@ $$
 
 $$
 \mathbb{E}[w_t r_{t+1}] = c\,\mu\,\mathbb{E}[\sigma_t^{-1}],\qquad
-\operatorname{Var}(w_t r_{t+1}) = c^2\big(1 + \mu^2\operatorname{Var}(\sigma_t^{-1})\big).
+\mathrm{Var}(w_t r_{t+1}) = c^2\big(1 + \mu^2\mathrm{Var}(\sigma_t^{-1})\big).
 $$
 
-**Result.** For daily data $\mu^2 \operatorname{Var}(\sigma^{-1}) \approx 0$. Applying **Jensen's inequality** twice (convexity of $x\mapsto 1/x$, concavity of $\sqrt{\cdot}$):
+**Result.** For daily data $\mu^2 \mathrm{Var}(\sigma^{-1}) \approx 0$. Applying **Jensen's inequality** twice (convexity of $x\mapsto 1/x$, concavity of $\sqrt{\cdot}$):
 
 $$
 SR_{\text{managed}} \approx \mu\,\mathbb{E}[\sigma_t^{-1}] \;\ge\; \frac{\mu}{\mathbb{E}[\sigma_t]} \;\ge\; \frac{\mu}{\sqrt{\mathbb{E}[\sigma_t^2]}} = SR_0 .
