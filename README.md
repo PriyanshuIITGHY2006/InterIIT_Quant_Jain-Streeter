@@ -1158,6 +1158,8 @@ python run.py download btc START END        → ctr download --asset btc --start
 
 | Document | Contents |
 |---|---|
+| `reports/technical_report/jain_streeter_technical_report.pdf` | the technical report: data analysis, indicator and ML research, rejected approaches, the strategy and its mathematics, the engine, risk and results (LaTeX source in the same folder) |
+| `presentation/jain_streeter_presentation.pdf`, `.pptx` | the presentation deck (41 slides) |
 | `reports/btc_strategy.md` | the BTC strategy in full, with mathematical foundations: why each indicator family fails or works, proofs and derivations, the multiple-testing correction |
 | `reports/btc_strategy_summary.md` | the BTC strategy, short version |
 | `reports/eth_strategy.md` | the ETH strategy in full, with the ETH-specific mathematics (scale invariance, tail dependence) |
