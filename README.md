@@ -1,26 +1,81 @@
-# Calm-Trend Regime (CTR): BTC/USDT and ETH/USDT strategies
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/logos/techmeet_dark.png">
+    <img src="assets/readme/logos/techmeet_light.png" alt="Inter IIT Tech Meet 15.0" height="56">
+  </picture>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/logos/bootcamp_dark.png">
+    <img src="assets/readme/logos/bootcamp_light.png" alt="Inter IIT Bootcamp" height="72">
+  </picture>
+</p>
 
-Two systematic daily strategies for Bitcoin and Ether, with the in-house backtest engine, the data research behind them and a reproducible system that runs the frozen strategies on any new data.
+<h1 align="center">Calm-Trend Regime (CTR)</h1>
 
-| | BTC/USDT · **CTR-S** | ETH/USDT · **CTR-ETH** | |
-|---|---|---|---|
-| **2021–2025 return** | **+368.4%** | **+481.7%** | buy-and-hold: BTC +197.9%, ETH +306.5% |
-| **Sharpe ratio** | **0.98** | **0.96** | buy-and-hold: 0.67, 0.75 |
-| **Max drawdown** | **−29.6%** | **−37.3%** | buy-and-hold: −76.6%, −79.3% |
-| **Closed trades** | 36 (15 short) | 21 | |
-| **Style** | long up to 1.5×, short 0.5× in calm bear markets | long up to 1.5×, never short | daily decisions |
+<p align="center">
+  <img src="assets/readme/logos/btc.png" alt="Bitcoin" height="40">
+  &nbsp;&nbsp;
+  <img src="assets/readme/logos/eth.png" alt="Ethereum" height="44">
+</p>
 
-All results include 0.15% fee + slippage on every fill, next-open execution, interest on borrowed money, and start from 10,000 USDT.
+<p align="center">
+  <b>Systematic daily strategies for BTC/USDT and ETH/USDT</b><br>
+  Team <b>Jain Streeter</b> · Priyanshu Debnath · Kushagra Verma<br>
+  Inter IIT Tech Meet 15.0 · Inter IIT Bootcamp, Quant problem statement
+</p>
 
-```bash
-docker build -t ctr . && docker run --rm ctr selftest              # verify
-docker run --rm -v "$PWD/runs:/app/runs" ctr run data/raw/BTCUSDT_1h.csv   # run
-python run.py download eth 2026-01-01 2026-10-01                   # new data, no Docker
-```
+<p align="center">
+  <a href="reports/technical_report/jain_streeter_technical_report.pdf"><b>Technical report</b></a> ·
+  <a href="presentation/jain_streeter_presentation.pdf"><b>Presentation</b></a> ·
+  <a href="#quick-start"><b>Quick start</b></a> ·
+  <a href="#results-at-a-glance"><b>Results</b></a> ·
+  <a href="tasks/quant.pdf"><b>Problem statement</b></a>
+</p>
 
 ---
 
-## Contents
+## Overview
+
+Two systematic daily strategies for Bitcoin and Ether, built on our own data research, with an in-house backtest engine and a reproducible system that runs the frozen strategies on any new data.
+
+- **A robust trend signal decides *whether* to hold** (7 averaged moving-average votes, 20 to 200 days).
+- **The market's state decides *how much*** (volatility percentile, trend quality, a downside storm brake, a squeeze warning and a 200-day gate).
+- **BTC (CTR-S)** adds a half-size short only in calm, fully confirmed bear markets. **ETH (CTR-ETH)** uses the same rules, long only.
+
+## Results at a glance
+
+| 2021–2025 | BTC/USDT · **CTR-S** | BTC buy-and-hold | ETH/USDT · **CTR-ETH** | ETH buy-and-hold |
+|---|---|---|---|---|
+| **Total return** | **+368.4%** | +197.9% | **+481.7%** | +306.5% |
+| **Sharpe ratio** | **0.98** | 0.67 | **0.96** | 0.75 |
+| **Max drawdown** | **−29.6%** | −76.6% | **−37.3%** | −79.3% |
+| **Closed trades** | 36 (15 short) | – | 21 | – |
+| **Exposure** | long ≤ 1.5×, short 0.5× in calm bear markets | – | long ≤ 1.5×, never short | – |
+
+All results start from 10,000 USDT and include 0.15% fee + slippage on every fill, next-open execution and interest on borrowed money. Full metrics: [Section 21](#21-required-metrics-20212025).
+
+## Quick start
+
+```bash
+docker build -t ctr . && docker run --rm ctr selftest                      # verify the install
+docker run --rm -v "$PWD/runs:/app/runs" ctr run data/raw/BTCUSDT_1h.csv   # run on a candle file
+python run.py download eth 2026-01-01 2026-10-01                           # fetch new data, no Docker
+```
+
+More in [Part VII · Reproduce](#part-vii--reproduce) and [Part VIII · Test against unseen data](#part-viii--test-against-unseen-data).
+
+## Documents
+
+| Document | What it is |
+|---|---|
+| [`reports/technical_report/jain_streeter_technical_report.pdf`](reports/technical_report/jain_streeter_technical_report.pdf) | the full technical report (35 pages): data analysis, research, rejected approaches, the strategy and its mathematics, risk and results |
+| [`presentation/jain_streeter_presentation.pdf`](presentation/jain_streeter_presentation.pdf) · [`.pptx`](presentation/jain_streeter_presentation.pptx) | the presentation deck (41 slides) |
+| [`reports/btc_strategy.md`](reports/btc_strategy.md) · [`reports/eth_strategy.md`](reports/eth_strategy.md) | each strategy in full, with mathematical foundations |
+| [`reports/data_research_report.md`](reports/data_research_report.md) | the data research |
+| [`reports/glossary.md`](reports/glossary.md) | every term and paper used, and what was taken from each |
+
+<details>
+<summary><b>Contents of this README</b> (45 sections in nine parts)</summary>
 
 **Part I · The project**
 1. [The task](#1-the-task)
@@ -84,6 +139,8 @@ python run.py download eth 2026-01-01 2026-10-01                   # new data, n
 43. [Make targets](#43-make-targets)
 44. [Metric definitions](#44-metric-definitions)
 45. [Further documents](#45-further-documents)
+
+</details>
 
 ---
 
