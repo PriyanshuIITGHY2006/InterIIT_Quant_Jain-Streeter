@@ -1,0 +1,34 @@
+# BTC Calm-Trend Regime with calm-bear shorts (CTR-S), 2021-2025
+
+| Metric | Value |
+|---|---|
+| Gross Profit (USDT) | 47,963.39 |
+| Net Profit (USDT) | 36,839.51 |
+| Total Closed Trades | 36 |
+| Win Rate (%) | 33.33 |
+| Max Drawdown (%) | -29.56 |
+| Gross Loss (USDT) | -11,123.88 |
+| Average Winning Trade (USDT) | 3,996.95 |
+| Average Losing Trade (USDT) | -463.49 |
+| Buy-and-Hold Return (%) | 197.92 |
+| Largest Losing Trade (USDT) | -3,950.76 |
+| Largest Winning Trade (USDT) | 19,827.38 |
+| Sharpe Ratio | 0.98 |
+| Sortino Ratio | 1.60 |
+| Average Holding Duration | 41 days 14:40:00 |
+| Maximum Holding Duration | 290 days 00:00:00 |
+| Total Return (%) | 368.40 |
+| Annualised Return (%) | 36.16 |
+| Calmar Ratio | 1.22 |
+| Exposure (%) | 82.04 |
+| Long Trades | 21 |
+| Short Trades | 15 |
+| Total Fees (USDT) | 4,412.24 |
+| Trading PnL before Fees (USDT) | 42,445.91 |
+| Total Financing (USDT) | 1,194.16 |
+| Max Drawdown Recovery Time | 252 days 00:00:00 |
+| Longest Time Under Water | 496 days 00:00:00 |
+| Quarters Beating Buy-and-Hold (%) | 55.00 |
+| Buy-and-Hold Max Drawdown (%) | -76.63 |
+| Buy-and-Hold Sharpe Ratio | 0.67 |
+| Orders Deferred by Outages | 0 |

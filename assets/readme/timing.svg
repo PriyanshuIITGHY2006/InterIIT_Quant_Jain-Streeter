@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="170" viewBox="0 0 880 170" font-family="Helvetica, Arial, sans-serif" font-size="14">
+  <rect width="880" height="170" fill="#fff"/>
+  <g fill="none" stroke="#111" stroke-width="1.2">
+    <rect x="80"  y="50" width="240" height="40"/>
+    <rect x="320" y="50" width="240" height="40"/>
+    <rect x="560" y="50" width="240" height="40"/>
+  </g>
+  <g fill="#111" text-anchor="middle">
+    <text x="200" y="75">t − 1</text>
+    <text x="440" y="75">t</text>
+    <text x="680" y="75">t + 1</text>
+  </g>
+  <circle cx="560" cy="90" r="5" fill="#111"/>
+  <circle cx="560" cy="50" r="5" fill="#e4572e"/>
+  <g font-size="13" text-anchor="middle">
+    <text x="560" y="118" fill="#111">decide at close t</text>
+    <text x="560" y="34"  fill="#e4572e">fill at open t + 1</text>
+  </g>
+</svg>

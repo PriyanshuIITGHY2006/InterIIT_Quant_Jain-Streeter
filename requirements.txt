@@ -1,0 +1,14 @@
+numpy
+pandas
+scipy
+statsmodels
+arch
+matplotlib
+seaborn
+ipykernel
+nbformat
+nbclient
+pytest
+tabulate
+scikit-learn
+shap

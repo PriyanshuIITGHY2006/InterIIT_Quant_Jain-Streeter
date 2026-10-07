@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="190" viewBox="0 0 880 190" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <rect width="880" height="190" fill="#fff"/>
+  <path d="M40 60H850" stroke="#111" stroke-width="1.2"/>
+  <path d="M40 54V66M121 54V66M202 54V66M283 54V66M364 54V66M445 54V66M526 54V66M607 54V66M688 54V66M769 54V66M850 54V66" stroke="#111" stroke-width="1.2"/>
+  <g fill="#111" text-anchor="middle">
+    <text x="80"  y="42">2017</text><text x="161" y="42">2018</text><text x="242" y="42">2019</text><text x="323" y="42">2020</text>
+    <text x="404" y="42">2021</text><text x="485" y="42">2022</text><text x="566" y="42">2023</text><text x="647" y="42">2024</text>
+    <text x="728" y="42">2025</text><text x="809" y="42">2026</text>
+  </g>
+  <g stroke-width="6">
+    <path d="M364 96H607" stroke="#111"/>
+    <path d="M607 96H688" stroke="#999"/>
+    <path d="M688 96H769" stroke="#e4572e"/>
+    <path d="M121 132H364" stroke="#ccc"/>
+    <path d="M769 132H850" stroke="#ccc"/>
+  </g>
+  <g fill="#666" font-size="12" text-anchor="middle">
+    <text x="485" y="120">train</text>
+    <text x="647" y="120">validation</text>
+    <text x="728" y="120">test</text>
+    <text x="242" y="156">later checks</text>
+    <text x="809" y="156">new data</text>
+  </g>
+</svg>

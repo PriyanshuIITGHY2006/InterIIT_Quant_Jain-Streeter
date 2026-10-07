@@ -1,0 +1,35 @@
+# The image ships code, tests and the competition data only.
+.git
+.github
+.devcontainer
+.venv
+**/__pycache__
+**/*.pyc
+.pytest_cache
+*.egg-info
+
+# documentation, research and outputs
+*.md
+docs/
+reports/
+notebooks/
+tries/
+tasks/
+results/
+runs/
+data/external/
+data/processed/
+CLAUDE.md
+.claude/
+
+# ML research code (not part of the strategies; needs the research stack)
+src/ml/*
+!src/ml/__init__.py
+!src/ml/cusum.py
+tests/test_ml.py
+
+# tooling
+Makefile
+docker-compose.yml
+Dockerfile
+.dockerignore

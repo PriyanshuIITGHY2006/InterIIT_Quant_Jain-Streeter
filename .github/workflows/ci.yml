@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: tests and a sample run
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements-lock.txt
+
+      - name: Install (pinned)
+        run: |
+          pip install -r requirements-lock.txt "setuptools>=69"
+          pip install --no-deps --no-build-isolation -e .
+
+      - name: Environment
+        run: ctr info
+
+      - name: Test suite (lookahead, engine, frozen results, system)
+        run: ctr selftest
+
+      - name: Sample run on the competition data
+        run: ctr run data/raw/ETHUSDT_1h.csv --start 2024-01-01 --out runs/ci-eth
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-eth-run
+          path: runs/ci-eth
+
+  docker:
+    name: docker image
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          tags: ctr:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Self-test inside the image
+        run: docker run --rm ctr:ci selftest
+
+      - name: Sample run inside the image
+        run: docker run --rm ctr:ci run data/raw/BTCUSDT_1h.csv --start 2025-01-01 --no-verify
