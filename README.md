@@ -4,17 +4,17 @@ Two systematic daily strategies for Bitcoin and Ether, with the in-house backtes
 
 ## How to reproduce the results
 
-There are two routes, and either gives the same numbers:
-
-| Route | You need | Best if |
+| Option | You need | Commands |
 |---|---|---|
-| **A · Docker** | Docker only | you don't want to install Python or any libraries |
-| **B · Python** | Python 3.12 or newer | you want to run or read the code directly |
+| **A · Python (recommended)** | Python 3.12 or newer | `make …` on macOS / Linux, or `python run.py …` anywhere |
+| **B · Docker** | Docker only | `docker …` |
 
-### Step 0 · Install the tools (skip what you already have)
+Both options give exactly the same numbers.
+
+### Step 0 · Install what you need (skip anything you already have)
 
 <details>
-<summary><b>Install Python (for route B)</b></summary>
+<summary><b>Install Python (for Option A)</b></summary>
 
 Any version from **3.12** upwards works; the published numbers were produced with 3.14.
 
@@ -22,14 +22,14 @@ Any version from **3.12** upwards works; the published numbers were produced wit
 |---|---|
 | **Windows** | Download the installer from [python.org/downloads](https://www.python.org/downloads/) and run it. **Tick "Add python.exe to PATH"** on the first screen. Alternative: `winget install Python.Python.3.13` in PowerShell. |
 | **macOS** | Download the macOS installer from [python.org/downloads](https://www.python.org/downloads/), or with Homebrew: `brew install python@3.13` |
-| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip` (Ubuntu 24.04 and newer ship Python 3.12+; on older releases install a newer Python from [python.org](https://www.python.org/downloads/) or with `pyenv`) |
-| **Fedora** | `sudo dnf install python3 python3-pip` |
+| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip make` (Ubuntu 24.04 and newer ship Python 3.12+; on older releases install a newer Python from [python.org](https://www.python.org/downloads/) or with `pyenv`) |
+| **Fedora** | `sudo dnf install python3 python3-pip make` |
 
-Check it in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux). It must print 3.12 or higher.
+Check it in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux). It must print 3.12 or higher. macOS and Linux usually have `make` already; on macOS, `xcode-select --install` adds it if missing.
 </details>
 
 <details>
-<summary><b>Install Docker (for route A)</b></summary>
+<summary><b>Install Docker (for Option B)</b></summary>
 
 | System | How |
 |---|---|
@@ -47,7 +47,35 @@ unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / doubl
 cd ctr                        # every command below runs from this folder
 ```
 
-### Step 2A · Route A: Docker
+### Step 2 · Option A: Python
+
+**A1 · With `make` (macOS / Linux): three commands.**
+
+```bash
+make install       # creates .venv and installs everything (about a minute)
+make test          # runs the 82 tests
+make reproduce     # rebuilds every published result into results/
+```
+
+**A2 · Without `make` (Windows, or anywhere).**
+
+```bash
+python -m venv .venv                     # 1. create an isolated environment (macOS / Linux: python3)
+source .venv/bin/activate                # 2. activate it (Windows: see the table below)
+pip install -e ".[dev]"                  # 3. install the project and its libraries
+python run.py selftest                   # 4. run the 82 tests
+python run.py reproduce                  # 5. rebuild every published result into results/
+```
+
+| Activating the environment (step 2) | Command |
+|---|---|
+| macOS / Linux | `source .venv/bin/activate` |
+| Windows PowerShell | `.venv\Scripts\Activate.ps1`. If it is blocked, first run `Set-ExecutionPolicy -Scope Process RemoteSigned` |
+| Windows Command Prompt | `.venv\Scripts\activate.bat` |
+
+The exact library versions behind the published numbers are pinned in `requirements-lock.txt`. To install exactly those, replace step 3 with `pip install -r requirements-lock.txt "setuptools>=69"` and then `pip install --no-deps --no-build-isolation -e .`.
+
+### Step 2 · Option B: Docker
 
 ```bash
 docker build -t ctr .                                              # 1. build the image (2–4 minutes the first time)
@@ -55,31 +83,10 @@ docker run --rm ctr selftest                                       # 2. run the 
 docker run --rm -v "$PWD/results:/app/results" ctr reproduce       # 3. rebuild every published result into results/
 ```
 
-- **Building** installs the pinned libraries and rebuilds the cleaned data from `data/raw/`.
+The same three steps with `make`: `make docker-build`, `make docker-test`, `make docker-reproduce`.
+
 - **Windows:** in PowerShell, write `${PWD}` instead of `$PWD`; in Command Prompt, write `%cd%`.
 - **macOS and Windows:** Docker Desktop must be running first.
-
-### Step 2B · Route B: Python
-
-```bash
-python -m venv .venv                     # 1. create an isolated environment (macOS / Linux: python3 -m venv .venv)
-source .venv/bin/activate                # 2. activate it (Windows: see below)
-pip install -e ".[dev]"                  # 3. install the project and its libraries (about a minute)
-python run.py selftest                   # 4. run the 82 tests
-python run.py reproduce                  # 5. rebuild every published result into results/
-```
-
-**Activating the environment (step 2):**
-
-| System | Command |
-|---|---|
-| macOS / Linux | `source .venv/bin/activate` |
-| Windows PowerShell | `.venv\Scripts\Activate.ps1`. If it is blocked, first run `Set-ExecutionPolicy -Scope Process RemoteSigned` |
-| Windows Command Prompt | `.venv\Scripts\activate.bat` |
-
-**Shortcuts and pinned versions:**
-- **`make` on macOS / Linux:** `make install && make test && make reproduce` does steps 1–5. Windows has no `make` by default; use the commands above.
-- **The exact library versions behind the published numbers:** run `pip install -r requirements-lock.txt "setuptools>=69"` and then `pip install --no-deps --no-build-isolation -e .` instead of step 3.
 
 ### Step 3 · Check the results
 
@@ -109,22 +116,43 @@ Open `results/btc/summary.md` and `results/eth/summary.md` for every metric.
 
 Give the system any candle file. It cleans the data, checks it for look-ahead, runs the frozen strategy, analyses the market, and tells you the position it would take next.
 
-**With Python:**
+### Option A: Python
+
+**With `make`:**
+
+```bash
+make run DATA=path/to/prices.csv ASSET=eth
+make run DATA=path/to/prices.csv ASSET=btc START=2026-01-01 END=2026-09-30
+```
+
+**With `python run.py` (after the install in Option A above):**
 
 ```bash
 python run.py path/to/BTCUSDT_new.csv                          # BTC or ETH is read from the file name
 python run.py path/to/prices.csv eth                           # or name the asset yourself
-ctr run path/to/prices.csv --asset btc --start 2026-01-01      # evaluate from a date; earlier rows only warm up
+ctr run path/to/prices.csv --asset btc --start 2026-01-01 --end 2026-09-30
 ```
 
-**With Docker** (put the file in a folder, mount it, and mount an output folder):
+| Setting | `make` | `run.py` / `ctr` | Meaning |
+|---|---|---|---|
+| file | `DATA=…` | first argument | path to the CSV file (required) |
+| asset | `ASSET=btc\|eth` | `eth` / `--asset eth` | needed only if the file name has no "BTC" or "ETH" in it |
+| start | `START=2026-01-01` | `--start` | first day to evaluate; earlier rows only warm up the indicators |
+| end | `END=2026-09-30` | `--end` | last day to evaluate (default: the last complete day in the file) |
+
+### Option B: Docker
+
+Copy the file into `data/external/` (the folder shared with the container), then run it:
 
 ```bash
-docker run --rm -v "$PWD/my_data:/app/data/external:ro" -v "$PWD/runs:/app/runs" \
+cp path/to/prices.csv data/external/
+make docker-run DATA=data/external/prices.csv ASSET=eth START=2026-01-01
+# or directly:
+docker run --rm -v "$PWD/data/external:/app/data/external:ro" -v "$PWD/runs:/app/runs" \
     ctr run data/external/prices.csv --asset eth --start 2026-01-01
 ```
 
-**What the file can look like:**
+### What the file can look like
 
 | Format | Example header |
 |---|---|
@@ -134,15 +162,17 @@ docker run --rm -v "$PWD/my_data:/app/data/external:ro" -v "$PWD/runs:/app/runs"
 
 - **Bar length:** hourly bars (or finer, aggregated to hours) or daily bars. The system detects which.
 - **Timestamps:** bar **open** times in UTC.
-- **History:** include at least 200 days before `--start` so the indicators are fully warmed up. With less, the run still works, and the report says so.
+- **History:** include at least 200 days before `START` so the indicators are fully warmed up. With less, the run still works, and the report says so.
 
-**What you get:** a folder `runs/<asset>_<file>_<time>/` with:
+### What you get
+
+A folder `runs/<asset>_<file>_<time>/` with:
 
 | File | Contents |
 |---|---|
 | `report.md` | everything on one page: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
 | `signal_today.json` | the position the strategy wants from the next open (long, short or flat, and how large) |
-| `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts |
+| `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts (the same files as in `results/`) |
 | `analysis/` | the data analysis: return statistics, tail index, variance ratios, volatility persistence, market states, charts |
 | `manifest.json` | the input file's hash, the period and the library versions, so the run can be repeated exactly |
 
@@ -155,14 +185,15 @@ No file needed: give an asset, a start date and an end date. The system:
 2. adds **one year of extra history before the start date**, so every indicator is fully warmed up on day one;
 3. evaluates the frozen strategy **exactly from the start date to the end date**.
 
+### Option A: Python
+
 ```bash
-python run.py binance btc 2026-01-01 2026-09-30                # short form
-ctr binance --asset eth --start 2024-01-01 --end 2024-12-31    # full form
-ctr binance --asset btc --start 2026-01-01 --end 2026-09-30 --warmup-days 200   # change the warm-up length
-make binance ASSET=btc START=2026-01-01 END=2026-09-30
+make binance ASSET=btc START=2026-01-01 END=2026-09-30         # with make
+python run.py binance btc 2026-01-01 2026-09-30                # or with run.py
+ctr binance --asset eth --start 2024-01-01 --end 2024-12-31 --warmup-days 200   # full form, custom warm-up
 ```
 
-With Docker:
+### Option B: Docker
 
 ```bash
 docker run --rm -v "$PWD/runs:/app/runs" ctr binance --asset btc --start 2026-01-01 --end 2026-09-30
