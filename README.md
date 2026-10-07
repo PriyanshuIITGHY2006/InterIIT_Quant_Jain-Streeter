@@ -2,135 +2,216 @@
 
 Two systematic daily strategies for Bitcoin and Ether, with the in-house backtest engine, the data research behind them and a reproducible system that runs the frozen strategies on any new data.
 
-## How to reproduce the results
+There are three things you can do with this code. Each section below is complete on its own, and each offers two options: **A · Python (recommended)** or **B · Docker**. Both give exactly the same numbers.
 
-| Option | You need | Commands |
-|---|---|---|
-| **A · Python (recommended)** | Python 3.12 or newer | `make …` on macOS / Linux, or `python run.py …` anywhere |
-| **B · Docker** | Docker only | `docker …` |
+| I want to… | Go to |
+|---|---|
+| reproduce the published results | [1 · Reproduce the results](#1--reproduce-the-results) |
+| run the strategies on a CSV file of my own | [2 · Run on an unknown CSV file](#2--run-on-an-unknown-csv-file) |
+| run the strategies on Binance data for any dates | [3 · Run on Binance data for any dates](#3--run-on-binance-data-for-any-dates) |
 
-Both options give exactly the same numbers.
+## 1 · Reproduce the results
 
-### Step 0 · Install what you need (skip anything you already have)
+### Option A · Python
+
+**Step 1 · Install Python 3.12 or newer**
 
 <details>
-<summary><b>Install Python (for Option A)</b></summary>
-
-Any version from **3.12** upwards works; the published numbers were produced with 3.14.
+<summary><b>Install Python</b> (skip if <code>python --version</code> already shows 3.12 or higher)</summary>
 
 | System | How |
 |---|---|
 | **Windows** | Download the installer from [python.org/downloads](https://www.python.org/downloads/) and run it. **Tick "Add python.exe to PATH"** on the first screen. Alternative: `winget install Python.Python.3.13` in PowerShell. |
-| **macOS** | Download the macOS installer from [python.org/downloads](https://www.python.org/downloads/), or with Homebrew: `brew install python@3.13` |
-| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip make` (Ubuntu 24.04 and newer ship Python 3.12+; on older releases install a newer Python from [python.org](https://www.python.org/downloads/) or with `pyenv`) |
+| **macOS** | Download the macOS installer from [python.org/downloads](https://www.python.org/downloads/), or with Homebrew: `brew install python@3.13`. `make` comes with `xcode-select --install`. |
+| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip make` (Ubuntu 24.04+ ships Python 3.12+; on older releases use [python.org](https://www.python.org/downloads/) or `pyenv`) |
 | **Fedora** | `sudo dnf install python3 python3-pip make` |
 
-Check it in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux). It must print 3.12 or higher. macOS and Linux usually have `make` already; on macOS, `xcode-select --install` adds it if missing.
+Check in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux) must print 3.12 or higher.
 </details>
 
-<details>
-<summary><b>Install Docker (for Option B)</b></summary>
-
-| System | How |
-|---|---|
-| **Windows** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). It turns on WSL 2 if needed and may ask for a restart. **Start Docker Desktop** and wait until it says it is running. |
-| **macOS** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (choose Apple silicon or Intel), then open it from Applications. |
-| **Linux** | `curl -fsSL https://get.docker.com \| sh`, then `sudo usermod -aG docker $USER` and log out and back in, so `docker` works without `sudo`. |
-
-Check it: `docker run --rm hello-world` must print "Hello from Docker!".
-</details>
-
-### Step 1 · Unzip and open a terminal in the folder
+**Step 2 · Unzip and open a terminal in the folder**
 
 ```bash
 unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
-cd ctr                        # every command below runs from this folder
+cd ctr                        # run every command from this folder
 ```
 
-### Step 2 · Option A: Python
+**Step 3 · Set up**
 
-**A1 · With `make` (macOS / Linux): three commands.**
+**With `make` (macOS / Linux):**
 
 ```bash
-make install       # creates .venv and installs everything (about a minute)
-make test          # runs the 82 tests
-make reproduce     # rebuilds every published result into results/
+make install                  # creates .venv and installs everything (about a minute)
 ```
 
-**A2 · Without `make` (Windows, or anywhere).**
+**Without `make` (Windows, or anywhere):**
 
 ```bash
-python -m venv .venv                     # 1. create an isolated environment (macOS / Linux: python3)
-source .venv/bin/activate                # 2. activate it (Windows: see the table below)
-pip install -e ".[dev]"                  # 3. install the project and its libraries
-python run.py selftest                   # 4. run the 82 tests
-python run.py reproduce                  # 5. rebuild every published result into results/
+python -m venv .venv          # macOS / Linux: python3 -m venv .venv
+source .venv/bin/activate     # Windows PowerShell: .venv\Scripts\Activate.ps1   Command Prompt: .venv\Scripts\activate.bat
+pip install -e ".[dev]"
 ```
 
-| Activating the environment (step 2) | Command |
-|---|---|
-| macOS / Linux | `source .venv/bin/activate` |
-| Windows PowerShell | `.venv\Scripts\Activate.ps1`. If it is blocked, first run `Set-ExecutionPolicy -Scope Process RemoteSigned` |
-| Windows Command Prompt | `.venv\Scripts\activate.bat` |
+If PowerShell blocks the activation script, first run `Set-ExecutionPolicy -Scope Process RemoteSigned`. With `make`, there is no need to activate anything.
 
-The exact library versions behind the published numbers are pinned in `requirements-lock.txt`. To install exactly those, replace step 3 with `pip install -r requirements-lock.txt "setuptools>=69"` and then `pip install --no-deps --no-build-isolation -e .`.
-
-### Step 2 · Option B: Docker
+**Step 4 · Run the tests**
 
 ```bash
-docker build -t ctr .                                              # 1. build the image (2–4 minutes the first time)
-docker run --rm ctr selftest                                       # 2. run the 82 tests
-docker run --rm -v "$PWD/results:/app/results" ctr reproduce       # 3. rebuild every published result into results/
+make test                     # or: python run.py selftest
 ```
 
-The same three steps with `make`: `make docker-build`, `make docker-test`, `make docker-reproduce`.
+**Step 5 · Reproduce the results**
 
-- **Windows:** in PowerShell, write `${PWD}` instead of `$PWD`; in Command Prompt, write `%cd%`.
-- **macOS and Windows:** Docker Desktop must be running first.
+```bash
+make reproduce                # or: python run.py reproduce
+```
 
-### Step 3 · Check the results
+**Step 6 · Check the results**
 
-The test step should end with `80 passed, 2 skipped`. The two skipped tests cover research-only indicators that need the optional research libraries; with `pip install -e ".[research]"` all 82 pass.
-
-`reproduce` rewrites `results/btc/` and `results/eth/`. For 2021–2024, 2025 and 2021–2025, that means:
-- all 15 required metrics;
-- trade history and fills;
-- equity curves, charts, and quarterly and yearly tables;
-- a `summary.md` per coin.
-
-You should get exactly:
+- **Tests:** they should end with `80 passed, 2 skipped`. The two skipped tests cover research-only indicators that need the optional research libraries.
+- **Results folders:** `results/btc/` and `results/eth/` now hold, for 2021–2024, 2025 and 2021–2025:
+  - all 15 required metrics;
+  - trade history and fills;
+  - equity curves and charts;
+  - quarterly and yearly tables;
+  - a `summary.md` per coin.
+- **Numbers:** open `results/btc/summary.md` and `results/eth/summary.md`. You should see exactly:
 
 | | 2021–2024 | 2025 | 2021–2025 |
 |---|---|---|---|
 | BTC CTR-S total return / Sharpe | +388.85% / 1.16 | −5.13% / −0.05 | +368.40% / 0.98 |
 | ETH CTR-ETH total return / Sharpe | +274.14% / 0.90 | +54.88% / 1.23 | +481.69% / 0.96 |
 
-Open `results/btc/summary.md` and `results/eth/summary.md` for every metric.
+For the exact library versions behind these numbers, replace Step 3 with `pip install -r requirements-lock.txt "setuptools>=69"` followed by `pip install --no-deps --no-build-isolation -e .`.
 
-**The data:**
-- **Raw candles:** the competition candles are in `data/raw/`.
-- **Cleaned data:** the cleaned files in `data/processed/` are fully determined by the raw ones. If that folder is empty (as in the size-limited submission zip), the first command that needs it rebuilds it in a few seconds, and the Docker build does it automatically.
-- **Identical:** the rebuilt files are byte-identical to the published ones.
+### Option B · Docker
 
-## How to check the strategies on an unknown CSV file
+**Step 1 · Install Docker**
 
-Give the system any candle file. It cleans the data, checks it for look-ahead, runs the frozen strategy, analyses the market, and tells you the position it would take next.
+<details>
+<summary><b>Install Docker</b> (skip if <code>docker run --rm hello-world</code> already works)</summary>
 
-### Option A: Python
+| System | How |
+|---|---|
+| **Windows** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). It turns on WSL 2 if needed and may ask for a restart. **Start Docker Desktop** and wait until it says it is running. |
+| **macOS** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Apple silicon or Intel), then open it from Applications. |
+| **Linux** | `curl -fsSL https://get.docker.com \| sh`, then `sudo usermod -aG docker $USER` and log out and back in. |
 
-**With `make`:**
+Check: `docker run --rm hello-world` must print "Hello from Docker!".
+</details>
+
+**Step 2 · Unzip and open a terminal in the folder**
 
 ```bash
-make run DATA=path/to/prices.csv ASSET=eth
-make run DATA=path/to/prices.csv ASSET=btc START=2026-01-01 END=2026-09-30
+unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
+cd ctr                        # run every command from this folder
 ```
 
-**With `python run.py` (after the install in Option A above):**
+**Step 3 · Build the image**
+
+Start Docker Desktop first (Windows / macOS), then:
 
 ```bash
-python run.py path/to/BTCUSDT_new.csv                          # BTC or ETH is read from the file name
-python run.py path/to/prices.csv eth                           # or name the asset yourself
-ctr run path/to/prices.csv --asset btc --start 2026-01-01 --end 2026-09-30
+docker build -t ctr .         # 2–4 minutes the first time; also rebuilds the cleaned data from data/raw
+```
+
+**Step 4 · Run the tests**
+
+```bash
+docker run --rm ctr selftest
+```
+
+**Step 5 · Reproduce the results**
+
+```bash
+docker run --rm -v "$PWD/results:/app/results" ctr reproduce
+```
+
+On Windows, write `${PWD}` instead of `$PWD` in PowerShell, or `%cd%` in Command Prompt.
+
+**Step 6 · Check the results**
+
+- **Tests:** they should end with `80 passed, 2 skipped`. The two skipped tests cover research-only indicators that need the optional research libraries.
+- **Results folders:** `results/btc/` and `results/eth/` now hold, for 2021–2024, 2025 and 2021–2025:
+  - all 15 required metrics;
+  - trade history and fills;
+  - equity curves and charts;
+  - quarterly and yearly tables;
+  - a `summary.md` per coin.
+- **Numbers:** open `results/btc/summary.md` and `results/eth/summary.md`. You should see exactly:
+
+| | 2021–2024 | 2025 | 2021–2025 |
+|---|---|---|---|
+| BTC CTR-S total return / Sharpe | +388.85% / 1.16 | −5.13% / −0.05 | +368.40% / 0.98 |
+| ETH CTR-ETH total return / Sharpe | +274.14% / 0.90 | +54.88% / 1.23 | +481.69% / 0.96 |
+
+The data: the zip ships the raw Binance candles (`data/raw/`). The cleaned files in `data/processed/` are rebuilt from them automatically (byte-identical to the published ones): on first use in Option A, and during the build in Option B.
+
+## 2 · Run on an unknown CSV file
+
+The system cleans your file, checks for look-ahead, runs the frozen strategy (BTC → CTR-S, ETH → CTR-ETH), analyses the market and tells you the position it would take next.
+
+### Option A · Python
+
+**Step 1 · Install Python 3.12 or newer**
+
+<details>
+<summary><b>Install Python</b> (skip if <code>python --version</code> already shows 3.12 or higher)</summary>
+
+| System | How |
+|---|---|
+| **Windows** | Download the installer from [python.org/downloads](https://www.python.org/downloads/) and run it. **Tick "Add python.exe to PATH"** on the first screen. Alternative: `winget install Python.Python.3.13` in PowerShell. |
+| **macOS** | Download the macOS installer from [python.org/downloads](https://www.python.org/downloads/), or with Homebrew: `brew install python@3.13`. `make` comes with `xcode-select --install`. |
+| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip make` (Ubuntu 24.04+ ships Python 3.12+; on older releases use [python.org](https://www.python.org/downloads/) or `pyenv`) |
+| **Fedora** | `sudo dnf install python3 python3-pip make` |
+
+Check in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux) must print 3.12 or higher.
+</details>
+
+**Step 2 · Unzip and open a terminal in the folder**
+
+```bash
+unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
+cd ctr                        # run every command from this folder
+```
+
+**Step 3 · Set up**
+
+**With `make` (macOS / Linux):**
+
+```bash
+make install                  # creates .venv and installs everything (about a minute)
+```
+
+**Without `make` (Windows, or anywhere):**
+
+```bash
+python -m venv .venv          # macOS / Linux: python3 -m venv .venv
+source .venv/bin/activate     # Windows PowerShell: .venv\Scripts\Activate.ps1   Command Prompt: .venv\Scripts\activate.bat
+pip install -e ".[dev]"
+```
+
+If PowerShell blocks the activation script, first run `Set-ExecutionPolicy -Scope Process RemoteSigned`. With `make`, there is no need to activate anything.
+
+**Step 4 · Check your file's format**
+
+| Format | Example header |
+|---|---|
+| Binance kline export | `timestamp,open,high,low,close,volume,close_time,quote_volume,trades,...` |
+| Binance kline dump without a header | `1704067200000,42283.58,42554.57,...` |
+| Any table with a time column and OHLC | `Date,Open,High,Low,Close,Volume` (any capitalisation) |
+
+- **Bar length:** hourly bars (or finer) or daily bars; the system detects which.
+- **Timestamps:** bar **open** times in UTC.
+- **History:** include at least 200 days before the start date so the indicators are fully warmed up. With less, the run still works, and the report says so.
+
+**Step 5 · Run**
+
+```bash
+make run DATA=path/to/prices.csv ASSET=eth                                  # with make
+make run DATA=path/to/prices.csv ASSET=btc START=2026-01-01 END=2026-09-30
+python run.py path/to/prices.csv eth                                        # or with run.py
+ctr run path/to/prices.csv --asset btc --start 2026-01-01 --end 2026-09-30  # or the full command
 ```
 
 | Setting | `make` | `run.py` / `ctr` | Meaning |
@@ -140,19 +221,57 @@ ctr run path/to/prices.csv --asset btc --start 2026-01-01 --end 2026-09-30
 | start | `START=2026-01-01` | `--start` | first day to evaluate; earlier rows only warm up the indicators |
 | end | `END=2026-09-30` | `--end` | last day to evaluate (default: the last complete day in the file) |
 
-### Option B: Docker
+**Step 6 · Check the results**
 
-Copy the file into `data/external/` (the folder shared with the container), then run it:
+The terminal prints a summary:
+- the strategy's return, Sharpe ratio and max drawdown next to buy-and-hold;
+- the market reading;
+- the next decision.
+
+Everything is saved in a new folder `runs/<asset>_<file>_<time>/`:
+
+| File | Contents |
+|---|---|
+| `report.md` | **start here**: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
+| `signal_today.json` | the position the strategy wants from the next open (long, short or flat, and how large) |
+| `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts (the same files as in `results/`) |
+| `analysis/` | the data analysis: return statistics, tail index, variance ratios, volatility persistence, market states, charts |
+| `daily_signals.csv` | every day's position and every decision layer |
+| `data_quality.json` | gaps, outages and repaired candles found in the data |
+| `manifest.json` | the input file's hash, the period and the library versions, so the run can be repeated exactly |
+
+### Option B · Docker
+
+**Step 1 · Install Docker**
+
+<details>
+<summary><b>Install Docker</b> (skip if <code>docker run --rm hello-world</code> already works)</summary>
+
+| System | How |
+|---|---|
+| **Windows** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). It turns on WSL 2 if needed and may ask for a restart. **Start Docker Desktop** and wait until it says it is running. |
+| **macOS** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Apple silicon or Intel), then open it from Applications. |
+| **Linux** | `curl -fsSL https://get.docker.com \| sh`, then `sudo usermod -aG docker $USER` and log out and back in. |
+
+Check: `docker run --rm hello-world` must print "Hello from Docker!".
+</details>
+
+**Step 2 · Unzip and open a terminal in the folder**
 
 ```bash
-cp path/to/prices.csv data/external/
-make docker-run DATA=data/external/prices.csv ASSET=eth START=2026-01-01
-# or directly:
-docker run --rm -v "$PWD/data/external:/app/data/external:ro" -v "$PWD/runs:/app/runs" \
-    ctr run data/external/prices.csv --asset eth --start 2026-01-01
+unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
+cd ctr                        # run every command from this folder
 ```
 
-### What the file can look like
+**Step 3 · Build the image**
+
+Start Docker Desktop first (Windows / macOS), then:
+
+```bash
+docker build -t ctr .         # 2–4 minutes the first time; also rebuilds the cleaned data from data/raw
+```
+
+**Step 4 · Check your file's format and copy it in**
 
 | Format | Example header |
 |---|---|
@@ -160,59 +279,201 @@ docker run --rm -v "$PWD/data/external:/app/data/external:ro" -v "$PWD/runs:/app
 | Binance kline dump without a header | `1704067200000,42283.58,42554.57,...` |
 | Any table with a time column and OHLC | `Date,Open,High,Low,Close,Volume` (any capitalisation) |
 
-- **Bar length:** hourly bars (or finer, aggregated to hours) or daily bars. The system detects which.
+- **Bar length:** hourly bars (or finer) or daily bars; the system detects which.
 - **Timestamps:** bar **open** times in UTC.
-- **History:** include at least 200 days before `START` so the indicators are fully warmed up. With less, the run still works, and the report says so.
+- **History:** include at least 200 days before the start date so the indicators are fully warmed up. With less, the run still works, and the report says so.
 
-### What you get
+The container can only see files inside `data/external/`, so copy your file there:
 
-A folder `runs/<asset>_<file>_<time>/` with:
+```bash
+cp path/to/prices.csv data/external/
+```
+
+**Step 5 · Run**
+
+```bash
+docker run --rm -v "$PWD/data/external:/app/data/external:ro" -v "$PWD/runs:/app/runs" \
+    ctr run data/external/prices.csv --asset eth --start 2026-01-01 --end 2026-09-30
+```
+
+`--asset`, `--start` and `--end` mean the same as in Option A; leave out `--start`/`--end` to use the whole file. With `make`: `make docker-run DATA=data/external/prices.csv ASSET=eth START=2026-01-01`. On Windows, write `${PWD}` instead of `$PWD` in PowerShell, or `%cd%` in Command Prompt.
+
+**Step 6 · Check the results**
+
+The terminal prints a summary:
+- the strategy's return, Sharpe ratio and max drawdown next to buy-and-hold;
+- the market reading;
+- the next decision.
+
+Everything is saved in a new folder `runs/<asset>_<file>_<time>/`:
 
 | File | Contents |
 |---|---|
-| `report.md` | everything on one page: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
+| `report.md` | **start here**: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
 | `signal_today.json` | the position the strategy wants from the next open (long, short or flat, and how large) |
 | `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts (the same files as in `results/`) |
 | `analysis/` | the data analysis: return statistics, tail index, variance ratios, volatility persistence, market states, charts |
+| `daily_signals.csv` | every day's position and every decision layer |
+| `data_quality.json` | gaps, outages and repaired candles found in the data |
 | `manifest.json` | the input file's hash, the period and the library versions, so the run can be repeated exactly |
 
-[Part VIII](#part-viii--test-against-unseen-data) explains how to read a run and gives a checklist for a fair out-of-sample test.
-
-## How to test on Binance data for any dates
+## 3 · Run on Binance data for any dates
 
 No file needed: give an asset, a start date and an end date. The system:
 1. fetches Binance's public hourly candles, with no account or key;
-2. adds **one year of extra history before the start date**, so every indicator is fully warmed up on day one;
+2. adds **one year of extra history before the start date**, so every indicator is warmed up on day one;
 3. evaluates the frozen strategy **exactly from the start date to the end date**.
 
-### Option A: Python
+**How it handles dates:**
+- **Unfinished candles are dropped:** only candles that have closed are kept.
+- **End dates are capped:** an end date of today or later is capped at the last finished day.
+- **The data is saved:** it goes into `data/external/`, so the run can be repeated offline.
+
+### Option A · Python
+
+**Step 1 · Install Python 3.12 or newer**
+
+<details>
+<summary><b>Install Python</b> (skip if <code>python --version</code> already shows 3.12 or higher)</summary>
+
+| System | How |
+|---|---|
+| **Windows** | Download the installer from [python.org/downloads](https://www.python.org/downloads/) and run it. **Tick "Add python.exe to PATH"** on the first screen. Alternative: `winget install Python.Python.3.13` in PowerShell. |
+| **macOS** | Download the macOS installer from [python.org/downloads](https://www.python.org/downloads/), or with Homebrew: `brew install python@3.13`. `make` comes with `xcode-select --install`. |
+| **Ubuntu / Debian** | `sudo apt update && sudo apt install python3 python3-venv python3-pip make` (Ubuntu 24.04+ ships Python 3.12+; on older releases use [python.org](https://www.python.org/downloads/) or `pyenv`) |
+| **Fedora** | `sudo dnf install python3 python3-pip make` |
+
+Check in a new terminal: `python --version` (Windows) or `python3 --version` (macOS / Linux) must print 3.12 or higher.
+</details>
+
+**Step 2 · Unzip and open a terminal in the folder**
 
 ```bash
-make binance ASSET=btc START=2026-01-01 END=2026-09-30         # with make
-python run.py binance btc 2026-01-01 2026-09-30                # or with run.py
+unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
+cd ctr                        # run every command from this folder
+```
+
+**Step 3 · Set up**
+
+**With `make` (macOS / Linux):**
+
+```bash
+make install                  # creates .venv and installs everything (about a minute)
+```
+
+**Without `make` (Windows, or anywhere):**
+
+```bash
+python -m venv .venv          # macOS / Linux: python3 -m venv .venv
+source .venv/bin/activate     # Windows PowerShell: .venv\Scripts\Activate.ps1   Command Prompt: .venv\Scripts\activate.bat
+pip install -e ".[dev]"
+```
+
+If PowerShell blocks the activation script, first run `Set-ExecutionPolicy -Scope Process RemoteSigned`. With `make`, there is no need to activate anything.
+
+**Step 4 · Run**
+
+```bash
+make binance ASSET=btc START=2026-01-01 END=2026-09-30                       # with make
+python run.py binance btc 2026-01-01 2026-09-30                              # or with run.py
 ctr binance --asset eth --start 2024-01-01 --end 2024-12-31 --warmup-days 200   # full form, custom warm-up
 ```
 
-### Option B: Docker
+**Step 5 · Check the results**
 
-```bash
-docker run --rm -v "$PWD/runs:/app/runs" ctr binance --asset btc --start 2026-01-01 --end 2026-09-30
-```
+The terminal prints a summary:
+- the strategy's return, Sharpe ratio and max drawdown next to buy-and-hold;
+- the market reading;
+- the next decision.
 
-**How it handles dates:**
-- **Unfinished candles are dropped:** the downloaded file keeps only candles that have closed, and it is saved in `data/external/` so the run can be repeated offline.
-- **End dates are capped:** an end date in the future, or today, is capped at the last finished day.
+Everything is saved in a new folder `runs/<asset>_<file>_<time>/`:
 
-**Example**, run on 7 October 2026:
+| File | Contents |
+|---|---|
+| `report.md` | **start here**: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
+| `signal_today.json` | the position the strategy wants from the next open (long, short or flat, and how large) |
+| `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts (the same files as in `results/`) |
+| `analysis/` | the data analysis: return statistics, tail index, variance ratios, volatility persistence, market states, charts |
+| `daily_signals.csv` | every day's position and every decision layer |
+| `data_quality.json` | gaps, outages and repaired candles found in the data |
+| `manifest.json` | the input file's hash, the period and the library versions, so the run can be repeated exactly |
 
-| BTC, 2026-01-01 → 2026-09-30 | CTR-S | Buy-and-hold |
+For example, BTC from 2026-01-01 to 2026-09-30 (run on 7 October 2026):
+
+| | CTR-S | Buy-and-hold |
 |---|---|---|
 | Return | **+18.6%** | −6.2% |
 | Sharpe | **1.11** | 0.04 |
 | Max drawdown | **−11.2%** | −39.5% |
 | Trades | 8 (4 short) | |
 
-The output is the same run folder as for a CSV file (`report.md`, `signal_today.json`, `backtest/`, `analysis/`, `manifest.json`).
+### Option B · Docker
+
+**Step 1 · Install Docker**
+
+<details>
+<summary><b>Install Docker</b> (skip if <code>docker run --rm hello-world</code> already works)</summary>
+
+| System | How |
+|---|---|
+| **Windows** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). It turns on WSL 2 if needed and may ask for a restart. **Start Docker Desktop** and wait until it says it is running. |
+| **macOS** | Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Apple silicon or Intel), then open it from Applications. |
+| **Linux** | `curl -fsSL https://get.docker.com \| sh`, then `sudo usermod -aG docker $USER` and log out and back in. |
+
+Check: `docker run --rm hello-world` must print "Hello from Docker!".
+</details>
+
+**Step 2 · Unzip and open a terminal in the folder**
+
+```bash
+unzip ctr_codebase.zip        # or right-click → Extract All (Windows) / double-click (macOS)
+cd ctr                        # run every command from this folder
+```
+
+**Step 3 · Build the image**
+
+Start Docker Desktop first (Windows / macOS), then:
+
+```bash
+docker build -t ctr .         # 2–4 minutes the first time; also rebuilds the cleaned data from data/raw
+```
+
+**Step 4 · Run**
+
+```bash
+docker run --rm -v "$PWD/runs:/app/runs" -v "$PWD/data/external:/app/data/external" \
+    ctr binance --asset btc --start 2026-01-01 --end 2026-09-30
+```
+
+On Windows, write `${PWD}` instead of `$PWD` in PowerShell, or `%cd%` in Command Prompt.
+
+**Step 5 · Check the results**
+
+The terminal prints a summary:
+- the strategy's return, Sharpe ratio and max drawdown next to buy-and-hold;
+- the market reading;
+- the next decision.
+
+Everything is saved in a new folder `runs/<asset>_<file>_<time>/`:
+
+| File | Contents |
+|---|---|
+| `report.md` | **start here**: data quality, the 15 metrics, the comparison with buy-and-hold, the market analysis and the next decision |
+| `signal_today.json` | the position the strategy wants from the next open (long, short or flat, and how large) |
+| `backtest/` | metrics, every trade and fill, the equity curve, quarterly and yearly tables, charts (the same files as in `results/`) |
+| `analysis/` | the data analysis: return statistics, tail index, variance ratios, volatility persistence, market states, charts |
+| `daily_signals.csv` | every day's position and every decision layer |
+| `data_quality.json` | gaps, outages and repaired candles found in the data |
+| `manifest.json` | the input file's hash, the period and the library versions, so the run can be repeated exactly |
+
+For example, BTC from 2026-01-01 to 2026-09-30 (run on 7 October 2026):
+
+| | CTR-S | Buy-and-hold |
+|---|---|---|
+| Return | **+18.6%** | −6.2% |
+| Sharpe | **1.11** | 0.04 |
+| Max drawdown | **−11.2%** | −39.5% |
+| Trades | 8 (4 short) | |
 
 ## Results at a glance
 
